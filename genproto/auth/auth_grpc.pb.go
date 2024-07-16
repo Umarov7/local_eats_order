@@ -27,7 +27,7 @@ type AuthClient interface {
 	ForgotPassword(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error)
 	ResetPassword(ctx context.Context, in *Code, opts ...grpc.CallOption) (*Status, error)
 	RefreshToken(ctx context.Context, in *Token, opts ...grpc.CallOption) (*Tokens, error)
-	Logout(ctx context.Context, in *Token, opts ...grpc.CallOption) (*Void, error)
+	Logout(ctx context.Context, in *Token, opts ...grpc.CallOption) (*Token, error)
 }
 
 type authClient struct {
@@ -83,8 +83,8 @@ func (c *authClient) RefreshToken(ctx context.Context, in *Token, opts ...grpc.C
 	return out, nil
 }
 
-func (c *authClient) Logout(ctx context.Context, in *Token, opts ...grpc.CallOption) (*Void, error) {
-	out := new(Void)
+func (c *authClient) Logout(ctx context.Context, in *Token, opts ...grpc.CallOption) (*Token, error) {
+	out := new(Token)
 	err := c.cc.Invoke(ctx, "/auth.Auth/Logout", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ type AuthServer interface {
 	ForgotPassword(context.Context, *ResetRequest) (*ResetResponse, error)
 	ResetPassword(context.Context, *Code) (*Status, error)
 	RefreshToken(context.Context, *Token) (*Tokens, error)
-	Logout(context.Context, *Token) (*Void, error)
+	Logout(context.Context, *Token) (*Token, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -124,7 +124,7 @@ func (UnimplementedAuthServer) ResetPassword(context.Context, *Code) (*Status, e
 func (UnimplementedAuthServer) RefreshToken(context.Context, *Token) (*Tokens, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
 }
-func (UnimplementedAuthServer) Logout(context.Context, *Token) (*Void, error) {
+func (UnimplementedAuthServer) Logout(context.Context, *Token) (*Token, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
