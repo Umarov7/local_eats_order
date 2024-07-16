@@ -28,6 +28,7 @@ type KitchenClient interface {
 	Delete(ctx context.Context, in *ID, opts ...grpc.CallOption) (*Void, error)
 	Fetch(ctx context.Context, in *Pagination, opts ...grpc.CallOption) (*Kitchens, error)
 	Search(ctx context.Context, in *SearchDetails, opts ...grpc.CallOption) (*Kitchens, error)
+	ValidateKitchen(ctx context.Context, in *ID, opts ...grpc.CallOption) (*Status, error)
 }
 
 type kitchenClient struct {
@@ -92,6 +93,15 @@ func (c *kitchenClient) Search(ctx context.Context, in *SearchDetails, opts ...g
 	return out, nil
 }
 
+func (c *kitchenClient) ValidateKitchen(ctx context.Context, in *ID, opts ...grpc.CallOption) (*Status, error) {
+	out := new(Status)
+	err := c.cc.Invoke(ctx, "/kitchen.Kitchen/ValidateKitchen", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KitchenServer is the server API for Kitchen service.
 // All implementations must embed UnimplementedKitchenServer
 // for forward compatibility
@@ -102,6 +112,7 @@ type KitchenServer interface {
 	Delete(context.Context, *ID) (*Void, error)
 	Fetch(context.Context, *Pagination) (*Kitchens, error)
 	Search(context.Context, *SearchDetails) (*Kitchens, error)
+	ValidateKitchen(context.Context, *ID) (*Status, error)
 	mustEmbedUnimplementedKitchenServer()
 }
 
@@ -126,6 +137,9 @@ func (UnimplementedKitchenServer) Fetch(context.Context, *Pagination) (*Kitchens
 }
 func (UnimplementedKitchenServer) Search(context.Context, *SearchDetails) (*Kitchens, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
+}
+func (UnimplementedKitchenServer) ValidateKitchen(context.Context, *ID) (*Status, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateKitchen not implemented")
 }
 func (UnimplementedKitchenServer) mustEmbedUnimplementedKitchenServer() {}
 
@@ -248,6 +262,24 @@ func _Kitchen_Search_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Kitchen_ValidateKitchen_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KitchenServer).ValidateKitchen(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kitchen.Kitchen/ValidateKitchen",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KitchenServer).ValidateKitchen(ctx, req.(*ID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Kitchen_ServiceDesc is the grpc.ServiceDesc for Kitchen service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -278,6 +310,10 @@ var Kitchen_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Search",
 			Handler:    _Kitchen_Search_Handler,
+		},
+		{
+			MethodName: "ValidateKitchen",
+			Handler:    _Kitchen_ValidateKitchen_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -9,6 +9,7 @@ import (
 )
 
 type Config struct {
+	AUTH_PORT   string
 	ORDER_PORT  string
 	DB_HOST     string
 	DB_PORT     string
@@ -23,6 +24,7 @@ func Load() *Config {
 	}
 
 	return &Config{
+		AUTH_PORT:   cast.ToString(coalesce("AUTH_PORT", ":50051")),
 		ORDER_PORT:  cast.ToString(coalesce("ORDER_PORT", ":50052")),
 		DB_HOST:     cast.ToString(coalesce("DB_HOST", "localhost")),
 		DB_PORT:     cast.ToString(coalesce("DB_PORT", "5432")),

@@ -10,6 +10,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -19,22 +20,475 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type NewReview struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	OrderId string  `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	Rating  float32 `protobuf:"fixed32,2,opt,name=rating,proto3" json:"rating,omitempty"`
+	Comment string  `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
+}
+
+func (x *NewReview) Reset() {
+	*x = NewReview{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_review_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *NewReview) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NewReview) ProtoMessage() {}
+
+func (x *NewReview) ProtoReflect() protoreflect.Message {
+	mi := &file_review_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NewReview.ProtoReflect.Descriptor instead.
+func (*NewReview) Descriptor() ([]byte, []int) {
+	return file_review_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *NewReview) GetOrderId() string {
+	if x != nil {
+		return x.OrderId
+	}
+	return ""
+}
+
+func (x *NewReview) GetRating() float32 {
+	if x != nil {
+		return x.Rating
+	}
+	return 0
+}
+
+func (x *NewReview) GetComment() string {
+	if x != nil {
+		return x.Comment
+	}
+	return ""
+}
+
+type NewReviewResp struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id        string  `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	OrderId   string  `protobuf:"bytes,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	UserId    string  `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	KitchenId string  `protobuf:"bytes,4,opt,name=kitchen_id,json=kitchenId,proto3" json:"kitchen_id,omitempty"`
+	Rating    float32 `protobuf:"fixed32,5,opt,name=rating,proto3" json:"rating,omitempty"`
+	Comment   string  `protobuf:"bytes,6,opt,name=comment,proto3" json:"comment,omitempty"`
+	CreatedAt string  `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+}
+
+func (x *NewReviewResp) Reset() {
+	*x = NewReviewResp{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_review_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *NewReviewResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NewReviewResp) ProtoMessage() {}
+
+func (x *NewReviewResp) ProtoReflect() protoreflect.Message {
+	mi := &file_review_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NewReviewResp.ProtoReflect.Descriptor instead.
+func (*NewReviewResp) Descriptor() ([]byte, []int) {
+	return file_review_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *NewReviewResp) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *NewReviewResp) GetOrderId() string {
+	if x != nil {
+		return x.OrderId
+	}
+	return ""
+}
+
+func (x *NewReviewResp) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *NewReviewResp) GetKitchenId() string {
+	if x != nil {
+		return x.KitchenId
+	}
+	return ""
+}
+
+func (x *NewReviewResp) GetRating() float32 {
+	if x != nil {
+		return x.Rating
+	}
+	return 0
+}
+
+func (x *NewReviewResp) GetComment() string {
+	if x != nil {
+		return x.Comment
+	}
+	return ""
+}
+
+func (x *NewReviewResp) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+type Filter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	KitchenId string `protobuf:"bytes,1,opt,name=kitchen_id,json=kitchenId,proto3" json:"kitchen_id,omitempty"`
+	Limit     int32  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset    int32  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+}
+
+func (x *Filter) Reset() {
+	*x = Filter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_review_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Filter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Filter) ProtoMessage() {}
+
+func (x *Filter) ProtoReflect() protoreflect.Message {
+	mi := &file_review_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Filter.ProtoReflect.Descriptor instead.
+func (*Filter) Descriptor() ([]byte, []int) {
+	return file_review_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Filter) GetKitchenId() string {
+	if x != nil {
+		return x.KitchenId
+	}
+	return ""
+}
+
+func (x *Filter) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *Filter) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+type ReviewDetails struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id        string  `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserName  string  `protobuf:"bytes,2,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"`
+	Rating    float32 `protobuf:"fixed32,3,opt,name=rating,proto3" json:"rating,omitempty"`
+	Comment   string  `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	CreatedAt string  `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+}
+
+func (x *ReviewDetails) Reset() {
+	*x = ReviewDetails{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_review_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ReviewDetails) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewDetails) ProtoMessage() {}
+
+func (x *ReviewDetails) ProtoReflect() protoreflect.Message {
+	mi := &file_review_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewDetails.ProtoReflect.Descriptor instead.
+func (*ReviewDetails) Descriptor() ([]byte, []int) {
+	return file_review_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ReviewDetails) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ReviewDetails) GetUserName() string {
+	if x != nil {
+		return x.UserName
+	}
+	return ""
+}
+
+func (x *ReviewDetails) GetRating() float32 {
+	if x != nil {
+		return x.Rating
+	}
+	return 0
+}
+
+func (x *ReviewDetails) GetComment() string {
+	if x != nil {
+		return x.Comment
+	}
+	return ""
+}
+
+func (x *ReviewDetails) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+type Reviews struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Reviews       []*ReviewDetails `protobuf:"bytes,1,rep,name=reviews,proto3" json:"reviews,omitempty"`
+	Total         int32            `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	AverageRating float32          `protobuf:"fixed32,3,opt,name=average_rating,json=averageRating,proto3" json:"average_rating,omitempty"`
+	Page          int32            `protobuf:"varint,4,opt,name=page,proto3" json:"page,omitempty"`
+	Limit         int32            `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"`
+}
+
+func (x *Reviews) Reset() {
+	*x = Reviews{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_review_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Reviews) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Reviews) ProtoMessage() {}
+
+func (x *Reviews) ProtoReflect() protoreflect.Message {
+	mi := &file_review_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Reviews.ProtoReflect.Descriptor instead.
+func (*Reviews) Descriptor() ([]byte, []int) {
+	return file_review_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *Reviews) GetReviews() []*ReviewDetails {
+	if x != nil {
+		return x.Reviews
+	}
+	return nil
+}
+
+func (x *Reviews) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *Reviews) GetAverageRating() float32 {
+	if x != nil {
+		return x.AverageRating
+	}
+	return 0
+}
+
+func (x *Reviews) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *Reviews) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
 var File_review_proto protoreflect.FileDescriptor
 
 var file_review_proto_rawDesc = []byte{
 	0x0a, 0x0c, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06,
-	0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x42, 0x11, 0x5a, 0x0f, 0x67, 0x65, 0x6e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x2f, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x22, 0x58, 0x0a, 0x09, 0x4e, 0x65, 0x77, 0x52, 0x65, 0x76,
+	0x69, 0x65, 0x77, 0x12, 0x19, 0x0a, 0x08, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x49, 0x64, 0x12, 0x16,
+	0x0a, 0x06, 0x72, 0x61, 0x74, 0x69, 0x6e, 0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x02, 0x52, 0x06,
+	0x72, 0x61, 0x74, 0x69, 0x6e, 0x67, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e,
+	0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74,
+	0x22, 0xc3, 0x01, 0x0a, 0x0d, 0x4e, 0x65, 0x77, 0x52, 0x65, 0x76, 0x69, 0x65, 0x77, 0x52, 0x65,
+	0x73, 0x70, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02,
+	0x69, 0x64, 0x12, 0x19, 0x0a, 0x08, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x49, 0x64, 0x12, 0x17, 0x0a,
+	0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06,
+	0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1d, 0x0a, 0x0a, 0x6b, 0x69, 0x74, 0x63, 0x68, 0x65,
+	0x6e, 0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6b, 0x69, 0x74, 0x63,
+	0x68, 0x65, 0x6e, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x61, 0x74, 0x69, 0x6e, 0x67, 0x18,
+	0x05, 0x20, 0x01, 0x28, 0x02, 0x52, 0x06, 0x72, 0x61, 0x74, 0x69, 0x6e, 0x67, 0x12, 0x18, 0x0a,
+	0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07,
+	0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74,
+	0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x63, 0x72, 0x65,
+	0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22, 0x55, 0x0a, 0x06, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72,
+	0x12, 0x1d, 0x0a, 0x0a, 0x6b, 0x69, 0x74, 0x63, 0x68, 0x65, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6b, 0x69, 0x74, 0x63, 0x68, 0x65, 0x6e, 0x49, 0x64, 0x12,
+	0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05,
+	0x6c, 0x69, 0x6d, 0x69, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x22, 0x8d, 0x01,
+	0x0a, 0x0d, 0x52, 0x65, 0x76, 0x69, 0x65, 0x77, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x12,
+	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12,
+	0x1b, 0x0a, 0x09, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x08, 0x75, 0x73, 0x65, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x16, 0x0a, 0x06,
+	0x72, 0x61, 0x74, 0x69, 0x6e, 0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x02, 0x52, 0x06, 0x72, 0x61,
+	0x74, 0x69, 0x6e, 0x67, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x18,
+	0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x1d,
+	0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x05, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x09, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22, 0xa1, 0x01,
+	0x0a, 0x07, 0x52, 0x65, 0x76, 0x69, 0x65, 0x77, 0x73, 0x12, 0x2f, 0x0a, 0x07, 0x72, 0x65, 0x76,
+	0x69, 0x65, 0x77, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x72, 0x65, 0x76,
+	0x69, 0x65, 0x77, 0x2e, 0x52, 0x65, 0x76, 0x69, 0x65, 0x77, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c,
+	0x73, 0x52, 0x07, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f,
+	0x74, 0x61, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c,
+	0x12, 0x25, 0x0a, 0x0e, 0x61, 0x76, 0x65, 0x72, 0x61, 0x67, 0x65, 0x5f, 0x72, 0x61, 0x74, 0x69,
+	0x6e, 0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x02, 0x52, 0x0d, 0x61, 0x76, 0x65, 0x72, 0x61, 0x67,
+	0x65, 0x52, 0x61, 0x74, 0x69, 0x6e, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x67, 0x65, 0x18,
+	0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x70, 0x61, 0x67, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x6c,
+	0x69, 0x6d, 0x69, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69,
+	0x74, 0x32, 0x7b, 0x0a, 0x06, 0x52, 0x65, 0x76, 0x69, 0x65, 0x77, 0x12, 0x3a, 0x0a, 0x0e, 0x52,
+	0x61, 0x74, 0x65, 0x41, 0x6e, 0x64, 0x43, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x11, 0x2e,
+	0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x2e, 0x4e, 0x65, 0x77, 0x52, 0x65, 0x76, 0x69, 0x65, 0x77,
+	0x1a, 0x15, 0x2e, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x2e, 0x4e, 0x65, 0x77, 0x52, 0x65, 0x76,
+	0x69, 0x65, 0x77, 0x52, 0x65, 0x73, 0x70, 0x12, 0x35, 0x0a, 0x12, 0x47, 0x65, 0x74, 0x52, 0x65,
+	0x76, 0x69, 0x65, 0x77, 0x4f, 0x66, 0x4b, 0x69, 0x74, 0x63, 0x68, 0x65, 0x6e, 0x12, 0x0e, 0x2e,
+	0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x2e, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x1a, 0x0f, 0x2e,
+	0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x2e, 0x52, 0x65, 0x76, 0x69, 0x65, 0x77, 0x73, 0x42, 0x11,
+	0x5a, 0x0f, 0x67, 0x65, 0x6e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x72, 0x65, 0x76, 0x69, 0x65,
+	0x77, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
-var file_review_proto_goTypes = []interface{}{}
+var (
+	file_review_proto_rawDescOnce sync.Once
+	file_review_proto_rawDescData = file_review_proto_rawDesc
+)
+
+func file_review_proto_rawDescGZIP() []byte {
+	file_review_proto_rawDescOnce.Do(func() {
+		file_review_proto_rawDescData = protoimpl.X.CompressGZIP(file_review_proto_rawDescData)
+	})
+	return file_review_proto_rawDescData
+}
+
+var file_review_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_review_proto_goTypes = []interface{}{
+	(*NewReview)(nil),     // 0: review.NewReview
+	(*NewReviewResp)(nil), // 1: review.NewReviewResp
+	(*Filter)(nil),        // 2: review.Filter
+	(*ReviewDetails)(nil), // 3: review.ReviewDetails
+	(*Reviews)(nil),       // 4: review.Reviews
+}
 var file_review_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	3, // 0: review.Reviews.reviews:type_name -> review.ReviewDetails
+	0, // 1: review.Review.RateAndComment:input_type -> review.NewReview
+	2, // 2: review.Review.GetReviewOfKitchen:input_type -> review.Filter
+	1, // 3: review.Review.RateAndComment:output_type -> review.NewReviewResp
+	4, // 4: review.Review.GetReviewOfKitchen:output_type -> review.Reviews
+	3, // [3:5] is the sub-list for method output_type
+	1, // [1:3] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_review_proto_init() }
@@ -42,18 +496,81 @@ func file_review_proto_init() {
 	if File_review_proto != nil {
 		return
 	}
+	if !protoimpl.UnsafeEnabled {
+		file_review_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*NewReview); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_review_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*NewReviewResp); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_review_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Filter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_review_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ReviewDetails); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_review_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Reviews); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_review_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   0,
+			NumMessages:   5,
 			NumExtensions: 0,
-			NumServices:   0,
+			NumServices:   1,
 		},
 		GoTypes:           file_review_proto_goTypes,
 		DependencyIndexes: file_review_proto_depIdxs,
+		MessageInfos:      file_review_proto_msgTypes,
 	}.Build()
 	File_review_proto = out.File
 	file_review_proto_rawDesc = nil

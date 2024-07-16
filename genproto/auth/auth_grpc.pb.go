@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type AuthClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*Tokens, error)
-	ResetPasswordRequest(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error)
+	ForgotPassword(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error)
 	ResetPassword(ctx context.Context, in *Code, opts ...grpc.CallOption) (*Status, error)
 	RefreshToken(ctx context.Context, in *Token, opts ...grpc.CallOption) (*Tokens, error)
 	Logout(ctx context.Context, in *Token, opts ...grpc.CallOption) (*Void, error)
@@ -56,9 +56,9 @@ func (c *authClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.C
 	return out, nil
 }
 
-func (c *authClient) ResetPasswordRequest(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error) {
+func (c *authClient) ForgotPassword(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error) {
 	out := new(ResetResponse)
-	err := c.cc.Invoke(ctx, "/auth.Auth/ResetPasswordRequest", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/auth.Auth/ForgotPassword", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (c *authClient) Logout(ctx context.Context, in *Token, opts ...grpc.CallOpt
 type AuthServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*Tokens, error)
-	ResetPasswordRequest(context.Context, *ResetRequest) (*ResetResponse, error)
+	ForgotPassword(context.Context, *ResetRequest) (*ResetResponse, error)
 	ResetPassword(context.Context, *Code) (*Status, error)
 	RefreshToken(context.Context, *Token) (*Tokens, error)
 	Logout(context.Context, *Token) (*Void, error)
@@ -115,8 +115,8 @@ func (UnimplementedAuthServer) Register(context.Context, *RegisterRequest) (*Reg
 func (UnimplementedAuthServer) Login(context.Context, *LoginRequest) (*Tokens, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedAuthServer) ResetPasswordRequest(context.Context, *ResetRequest) (*ResetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ResetPasswordRequest not implemented")
+func (UnimplementedAuthServer) ForgotPassword(context.Context, *ResetRequest) (*ResetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ForgotPassword not implemented")
 }
 func (UnimplementedAuthServer) ResetPassword(context.Context, *Code) (*Status, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResetPassword not implemented")
@@ -176,20 +176,20 @@ func _Auth_Login_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Auth_ResetPasswordRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Auth_ForgotPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ResetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServer).ResetPasswordRequest(ctx, in)
+		return srv.(AuthServer).ForgotPassword(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/auth.Auth/ResetPasswordRequest",
+		FullMethod: "/auth.Auth/ForgotPassword",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).ResetPasswordRequest(ctx, req.(*ResetRequest))
+		return srv.(AuthServer).ForgotPassword(ctx, req.(*ResetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -264,8 +264,8 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Auth_Login_Handler,
 		},
 		{
-			MethodName: "ResetPasswordRequest",
-			Handler:    _Auth_ResetPasswordRequest_Handler,
+			MethodName: "ForgotPassword",
+			Handler:    _Auth_ForgotPassword_Handler,
 		},
 		{
 			MethodName: "ResetPassword",
