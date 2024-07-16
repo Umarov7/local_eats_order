@@ -18,7 +18,7 @@ func NewPaymentRepo(db *sql.DB) *PaymentRepo {
 
 func (p *PaymentRepo) Create(ctx context.Context, data *pb.NewPayment) (*pb.NewPaymentResp, error) {
 	query := `
-	inser into
+	insert into
 		payments (order_id, amount, method, card_number, expiry_date, cvv)
 	values
 		($1, $2, $3, $4, $5, $6)
@@ -36,9 +36,14 @@ func (p *PaymentRepo) Create(ctx context.Context, data *pb.NewPayment) (*pb.NewP
 	)
 
 	var pay pb.NewPaymentResp
-	err = row.Scan(&pay.Id, &pay.OrderId, &pay.Amount, &pay.Status, &pay.TransactionId, &pay.CreatedAt)
+	var trID sql.NullString
+	err = row.Scan(&pay.Id, &pay.OrderId, &pay.Amount, &pay.Status, &trID, &pay.CreatedAt)
 	if err != nil {
 		return nil, errors.Wrap(err, "insertion failure")
+	}
+
+	if trID.Valid {
+		pay.TransactionId = trID.String
 	}
 
 	return &pay, nil
@@ -51,16 +56,30 @@ func (p *PaymentRepo) Read(ctx context.Context, id *pb.ID) (*pb.PaymentDetails, 
 	from
 		payments
 	where
-		deleted_at is null and id = $1
+		id = $1
 	`
 
 	var pay pb.PaymentDetails
-	err := p.DB.QueryRowContext(ctx, query, id.Id).Scan(&pay.Id, &pay.OrderId, &pay.Amount, &pay.Status,
-		&pay.Method, &pay.CardNumber, &pay.ExpiryDate, &pay.Cvv, &pay.TransactionId, &pay.CreatedAt)
+	var cardNum, expDate, cvv, trID sql.NullString
+	err := p.DB.QueryRowContext(ctx, query, id.Id).Scan(&pay.OrderId, &pay.Amount, &pay.Status,
+		&pay.Method, &cardNum, &expDate, &cvv, &trID, &pay.CreatedAt)
 	if err != nil {
 		return nil, errors.Wrap(err, "reading failure")
 	}
 
+	pay.Id = id.Id
+	if cardNum.Valid {
+		pay.CardNumber = cardNum.String
+	}
+	if expDate.Valid {
+		pay.ExpiryDate = expDate.String
+	}
+	if cvv.Valid {
+		pay.Cvv = cvv.String
+	}
+	if trID.Valid {
+		pay.TransactionId = trID.String
+	}
 	return &pay, nil
 }
 

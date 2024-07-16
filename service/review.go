@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
+	pbk "order-service/genproto/kitchen"
 	pb "order-service/genproto/review"
 	pbu "order-service/genproto/user"
 	"order-service/pkg/logger"
@@ -14,16 +15,20 @@ import (
 
 type ReviewService struct {
 	pb.UnimplementedReviewServer
-	Repo       *postgres.ReviewRepo
-	UserClient pbu.UserClient
-	Logger     *slog.Logger
+	Repo          *postgres.ReviewRepo
+	OrderRepo     *postgres.OrderRepo
+	UserClient    pbu.UserClient
+	KitchenClient pbk.KitchenClient
+	Logger        *slog.Logger
 }
 
-func NewReviewService(db *sql.DB, userCl pbu.UserClient) *ReviewService {
+func NewReviewService(db *sql.DB, userCl pbu.UserClient, knCl pbk.KitchenClient) *ReviewService {
 	return &ReviewService{
-		Repo:       postgres.NewReviewRepo(db),
-		UserClient: userCl,
-		Logger:     logger.NewLogger(),
+		Repo:          postgres.NewReviewRepo(db),
+		OrderRepo:     postgres.NewOrderRepo(db),
+		UserClient:    userCl,
+		KitchenClient: knCl,
+		Logger:        logger.NewLogger(),
 	}
 }
 
@@ -33,6 +38,20 @@ func (s *ReviewService) RateAndComment(ctx context.Context, req *pb.NewReview) (
 	resp, err := s.Repo.Create(ctx, req)
 	if err != nil {
 		er := errors.Wrap(err, "failed to create review")
+		s.Logger.Error(er.Error())
+		return nil, er
+	}
+
+	kitchenID, err := s.OrderRepo.GetKitchenID(ctx, req.OrderId)
+	if err != nil {
+		er := errors.Wrap(err, "failed to get kitchen id")
+		s.Logger.Error(er.Error())
+		return nil, er
+	}
+
+	_, err = s.KitchenClient.UpdateRating(ctx, &pbk.Rating{Id: kitchenID, Rating: req.Rating})
+	if err != nil {
+		er := errors.Wrap(err, "failed to update rating")
 		s.Logger.Error(er.Error())
 		return nil, er
 	}

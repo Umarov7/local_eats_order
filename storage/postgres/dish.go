@@ -3,8 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	pb "order-service/genproto/dish"
+	"strconv"
 
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 )
 
@@ -26,17 +29,19 @@ func (d *DishRepo) Create(ctx context.Context, data *pb.NewDish) (*pb.NewDishRes
 		id, kitchen_id, name, description, price, category, ingredients, available, created_at
 	`
 
+	var ings pq.StringArray
 	row := d.DB.QueryRowContext(ctx, query, data.KitchenId, data.Name, data.Description,
-		data.Price, data.Category, data.Ingredients, data.Available,
+		data.Price, data.Category, pq.Array(data.Ingredients), data.Available,
 	)
 
 	var dish pb.NewDishResp
 	err := row.Scan(&dish.Id, &dish.KitchenId, &dish.Name, &dish.Description, &dish.Price,
-		&dish.Category, &dish.Ingredients, &dish.Available, &dish.CreatedAt)
+		&dish.Category, &ings, &dish.Available, &dish.CreatedAt)
 	if err != nil {
 		return nil, errors.Wrap(err, "insertion failure")
 	}
 
+	dish.Ingredients = []string(ings)
 	return &dish, nil
 
 }
@@ -53,13 +58,29 @@ func (d *DishRepo) Read(ctx context.Context, id *pb.ID) (*pb.DishInfo, error) {
 	`
 
 	dish := pb.DishInfo{Id: id.Id}
+	var ings, aller, diet pq.StringArray
+	var nutrition []byte
+	var nutInfo NutritionInfo
 
 	err := d.DB.QueryRowContext(ctx, query, dish.Id).Scan(&dish.KitchenId, &dish.Name,
-		&dish.Description, &dish.Price, &dish.Category, &dish.Ingredients, &dish.Allergens,
-		&dish.NutritionInfo, &dish.DietaryInfo, &dish.Available, &dish.CreatedAt, &dish.UpdatedAt,
+		&dish.Description, &dish.Price, &dish.Category, &ings, &aller,
+		&nutrition, &diet, &dish.Available, &dish.CreatedAt, &dish.UpdatedAt,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "reading failure")
+	}
+
+	dish.Ingredients = []string(ings)
+	dish.Allergens = []string(aller)
+	dish.DietaryInfo = []string(diet)
+	err = json.Unmarshal(nutrition, &nutInfo)
+	if err != nil {
+		return nil, errors.Wrap(err, "unmarshalling failure")
+	}
+	dish.NutritionInfo = []string{
+		"calories: " + strconv.Itoa(nutInfo.Calories),
+		"fat: " + strconv.Itoa(nutInfo.Fat),
+		"carbs: " + strconv.Itoa(nutInfo.Carbs),
 	}
 
 	return &dish, nil
@@ -77,16 +98,18 @@ func (d *DishRepo) Update(ctx context.Context, data *pb.NewData) (*pb.UpdatedDat
 		id, kitchen_id, name, description, price, category, ingredients, available, updated_at
 	`
 	var upData pb.UpdatedData
+	var ings pq.StringArray
 
-	row := d.DB.QueryRowContext(ctx, query, data.Name, data.Price, data.Available)
+	row := d.DB.QueryRowContext(ctx, query, data.Name, data.Price, data.Available, data.Id)
 
 	err := row.Scan(&upData.Id, &upData.KitchenId, &upData.Name,
 		&upData.Description, &upData.Price, &upData.Category,
-		&upData.Ingredients, &upData.Available, &upData.UpdatedAt)
+		&ings, &upData.Available, &upData.UpdatedAt)
 	if err != nil {
 		return nil, errors.Wrap(err, "update failure")
 	}
 
+	upData.Ingredients = []string(ings)
 	return &upData, nil
 }
 

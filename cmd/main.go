@@ -35,8 +35,8 @@ func main() {
 
 	dishService := service.NewDishService(db, kitchenClient)
 	orderService := service.NewOrderService(db, userClient, kitchenClient)
-	reviewService := service.NewReviewService(db, userClient)
-	paymentService := service.NewPaymentService(db)
+	reviewService := service.NewReviewService(db, userClient, kitchenClient)
+	paymentService := service.NewPaymentService(db, kitchenClient)
 
 	server := grpc.NewServer()
 	pbd.RegisterDishServer(server, dishService)

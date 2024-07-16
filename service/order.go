@@ -68,6 +68,14 @@ func (s *OrderService) GetOrderByID(ctx context.Context, req *pb.ID) (*pb.OrderI
 		return nil, er
 	}
 
+	kitchen, err := s.KitchenClient.Get(ctx, &pbk.ID{Id: resp.KitchenName})
+	if err != nil {
+		er := errors.Wrap(err, "failed to get kitchen name")
+		s.Logger.Error(er.Error())
+		return nil, er
+	}
+	resp.KitchenName = kitchen.Name
+
 	s.Logger.Info("Order fetched")
 	return resp, nil
 }

@@ -50,7 +50,7 @@ func (r *ReviewRepo) GetKitchenReviews(ctx context.Context, f *pb.Filter) (*pb.R
 	from
 		reviews
 	where
-		deleted_at is null and kitchen_id = $1
+		kitchen_id = $1
 	limit $2
 	offset $3
 	`
@@ -112,7 +112,7 @@ func (r *ReviewRepo) GetIDs(ctx context.Context, id string) (string, string, err
 
 func (r *ReviewRepo) CountRows(ctx context.Context, kitchenID string) (int, error) {
 	var rowsNum int
-	query := "select count(1) from reviews where deleted_at is null and kitchen_id = $1"
+	query := "select count(1) from reviews where kitchen_id = $1"
 
 	err := r.DB.QueryRowContext(ctx, query, kitchenID).Scan(&rowsNum)
 	if err != nil {
@@ -124,7 +124,7 @@ func (r *ReviewRepo) CountRows(ctx context.Context, kitchenID string) (int, erro
 
 func (r *ReviewRepo) GetAvgRating(ctx context.Context, kitchenID string) (float32, error) {
 	var avg float32
-	query := "select avg(rating) from reviews where deleted_at is null and kitchen_id = $1"
+	query := "select avg(rating) from reviews where kitchen_id = $1"
 
 	err := r.DB.QueryRowContext(ctx, query, kitchenID).Scan(&avg)
 	if err != nil {
