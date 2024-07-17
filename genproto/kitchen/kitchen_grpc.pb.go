@@ -31,6 +31,8 @@ type KitchenClient interface {
 	ValidateKitchen(ctx context.Context, in *ID, opts ...grpc.CallOption) (*Status, error)
 	IncrementTotalOrders(ctx context.Context, in *ID, opts ...grpc.CallOption) (*Void, error)
 	UpdateRating(ctx context.Context, in *Rating, opts ...grpc.CallOption) (*Void, error)
+	UpdateRevenue(ctx context.Context, in *Revenue, opts ...grpc.CallOption) (*Void, error)
+	GetName(ctx context.Context, in *ID, opts ...grpc.CallOption) (*Name, error)
 }
 
 type kitchenClient struct {
@@ -122,6 +124,24 @@ func (c *kitchenClient) UpdateRating(ctx context.Context, in *Rating, opts ...gr
 	return out, nil
 }
 
+func (c *kitchenClient) UpdateRevenue(ctx context.Context, in *Revenue, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/kitchen.Kitchen/UpdateRevenue", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kitchenClient) GetName(ctx context.Context, in *ID, opts ...grpc.CallOption) (*Name, error) {
+	out := new(Name)
+	err := c.cc.Invoke(ctx, "/kitchen.Kitchen/GetName", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KitchenServer is the server API for Kitchen service.
 // All implementations must embed UnimplementedKitchenServer
 // for forward compatibility
@@ -135,6 +155,8 @@ type KitchenServer interface {
 	ValidateKitchen(context.Context, *ID) (*Status, error)
 	IncrementTotalOrders(context.Context, *ID) (*Void, error)
 	UpdateRating(context.Context, *Rating) (*Void, error)
+	UpdateRevenue(context.Context, *Revenue) (*Void, error)
+	GetName(context.Context, *ID) (*Name, error)
 	mustEmbedUnimplementedKitchenServer()
 }
 
@@ -168,6 +190,12 @@ func (UnimplementedKitchenServer) IncrementTotalOrders(context.Context, *ID) (*V
 }
 func (UnimplementedKitchenServer) UpdateRating(context.Context, *Rating) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateRating not implemented")
+}
+func (UnimplementedKitchenServer) UpdateRevenue(context.Context, *Revenue) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateRevenue not implemented")
+}
+func (UnimplementedKitchenServer) GetName(context.Context, *ID) (*Name, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetName not implemented")
 }
 func (UnimplementedKitchenServer) mustEmbedUnimplementedKitchenServer() {}
 
@@ -344,6 +372,42 @@ func _Kitchen_UpdateRating_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Kitchen_UpdateRevenue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Revenue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KitchenServer).UpdateRevenue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kitchen.Kitchen/UpdateRevenue",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KitchenServer).UpdateRevenue(ctx, req.(*Revenue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Kitchen_GetName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KitchenServer).GetName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kitchen.Kitchen/GetName",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KitchenServer).GetName(ctx, req.(*ID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Kitchen_ServiceDesc is the grpc.ServiceDesc for Kitchen service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -386,6 +450,14 @@ var Kitchen_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateRating",
 			Handler:    _Kitchen_UpdateRating_Handler,
+		},
+		{
+			MethodName: "UpdateRevenue",
+			Handler:    _Kitchen_UpdateRevenue_Handler,
+		},
+		{
+			MethodName: "GetName",
+			Handler:    _Kitchen_GetName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

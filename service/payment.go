@@ -39,7 +39,7 @@ func (s *PaymentService) MakePayment(ctx context.Context, req *pb.NewPayment) (*
 		return nil, er
 	}
 
-	kitchenID, err := s.OrderRepo.GetKitchenID(ctx, req.OrderId)
+	_, kitchenID, err := s.OrderRepo.GetIDs(ctx, req.OrderId)
 	if err != nil {
 		er := errors.Wrap(err, "failed to get kitchen id")
 		s.Logger.Error(er.Error())
@@ -49,6 +49,20 @@ func (s *PaymentService) MakePayment(ctx context.Context, req *pb.NewPayment) (*
 	_, err = s.KitchenClient.IncrementTotalOrders(ctx, &pbk.ID{Id: kitchenID})
 	if err != nil {
 		er := errors.Wrap(err, "failed to increment total orders")
+		s.Logger.Error(er.Error())
+		return nil, er
+	}
+
+	amount, err := s.OrderRepo.GetAmount(ctx, req.OrderId)
+	if err != nil {
+		er := errors.Wrap(err, "failed to get amount")
+		s.Logger.Error(er.Error())
+		return nil, er
+	}
+
+	_, err = s.KitchenClient.UpdateRevenue(ctx, &pbk.Revenue{Id: kitchenID, Revenue: amount})
+	if err != nil {
+		er := errors.Wrap(err, "failed to update revenue")
 		s.Logger.Error(er.Error())
 		return nil, er
 	}

@@ -35,6 +35,18 @@ func NewReviewService(db *sql.DB, userCl pbu.UserClient, knCl pbk.KitchenClient)
 func (s *ReviewService) RateAndComment(ctx context.Context, req *pb.NewReview) (*pb.NewReviewResp, error) {
 	s.Logger.Info("Creating review")
 
+	status, err := s.OrderRepo.GetStatus(ctx, req.OrderId)
+	if err != nil {
+		er := errors.Wrap(err, "failed to get order status")
+		s.Logger.Error(er.Error())
+		return nil, er
+	}
+	if status != "completed" {
+		er := errors.New("order is not completed")
+		s.Logger.Error(er.Error())
+		return nil, er
+	}
+
 	resp, err := s.Repo.Create(ctx, req)
 	if err != nil {
 		er := errors.Wrap(err, "failed to create review")
@@ -42,7 +54,7 @@ func (s *ReviewService) RateAndComment(ctx context.Context, req *pb.NewReview) (
 		return nil, er
 	}
 
-	kitchenID, err := s.OrderRepo.GetKitchenID(ctx, req.OrderId)
+	_, kitchenID, err := s.OrderRepo.GetIDs(ctx, req.OrderId)
 	if err != nil {
 		er := errors.Wrap(err, "failed to get kitchen id")
 		s.Logger.Error(er.Error())

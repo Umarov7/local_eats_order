@@ -10,7 +10,8 @@ import (
 )
 
 type OrderRepo struct {
-	DB *sql.DB
+	DB       *sql.DB
+	dishRepo *DishRepo
 }
 
 func NewOrderRepo(db *sql.DB) *OrderRepo {
@@ -28,16 +29,16 @@ func (o *OrderRepo) MakeOrder(ctx context.Context, data *pb.NewOrder) (*pb.NewOr
 	`
 	var sum float32
 	for _, v := range data.Items {
-		price, err := o.GetPrice(ctx, v.DishId)
+		_, price, err := o.dishRepo.GetNamePrice(ctx, v.DishId)
 		if err != nil {
 			return nil, err
 		}
 		sum += price * float32(v.Quantity)
 	}
 
-	var items []Item
+	var items []pb.Item
 	for _, v := range data.Items {
-		items = append(items, Item{DishId: v.DishId, Quantity: int(v.Quantity)})
+		items = append(items, pb.Item{DishId: v.DishId, Quantity: v.Quantity})
 	}
 
 	itemsBytes, err := json.Marshal(items)
@@ -90,14 +91,9 @@ func (o *OrderRepo) Read(ctx context.Context, id *pb.ID) (*pb.OrderInfo, error) 
 
 	var itemDetails []*pb.ItemDetails
 	for _, v := range items {
-		name, err := o.GetName(ctx, v.DishId)
+		name, price, err := o.dishRepo.GetNamePrice(ctx, v.DishId)
 		if err != nil {
-			return nil, errors.Wrap(err, "name retrieval failure")
-		}
-
-		price, err := o.GetPrice(ctx, v.DishId)
-		if err != nil {
-			return nil, errors.Wrap(err, "price retrieval failure")
+			return nil, errors.Wrap(err, "name and price retrieval failure")
 		}
 
 		itemDetails = append(itemDetails, &pb.ItemDetails{
@@ -123,6 +119,18 @@ func (o *OrderRepo) ChangeStatus(ctx context.Context, sts *pb.Status) (*pb.Updat
 	returning
 		id, status, updated_at
 	`
+	if sts.Status == "cancelled" {
+		query = `
+		update
+			orders
+		set
+			status = $1, deleted_at = NOW()
+		where
+			deleted_at is null and id = $2
+		returning
+			id, status, updated_at
+		`
+	}
 
 	var upData pb.UpdatedOrder
 	err := o.DB.QueryRowContext(ctx, query, sts.Status, sts.Id).Scan(
@@ -207,45 +215,58 @@ func (o *OrderRepo) FetchForKitchen(ctx context.Context, f *pb.Filter) ([]*pb.Or
 	return orders, nil
 }
 
-func (o *OrderRepo) GetPrice(ctx context.Context, id string) (float32, error) {
-	query := "select price from dishes where deleted_at is null and id = $1"
-	var price float32
-
-	err := o.DB.QueryRowContext(ctx, query, id).Scan(&price)
-	if err != nil {
-		return -1, errors.Wrap(err, "price retrieval failure")
-	}
-
-	return price, nil
-}
-
-func (o *OrderRepo) GetName(ctx context.Context, id string) (string, error) {
-	query := "select name from dishes where deleted_at is null and id = $1"
-	var name string
-
-	err := o.DB.QueryRowContext(ctx, query, id).Scan(&name)
-	if err != nil {
-		return "", errors.Wrap(err, "price retrieval failure")
-	}
-
-	return name, nil
-}
-
-func (o *OrderRepo) GetKitchenID(ctx context.Context, id string) (string, error) {
+func (o *OrderRepo) GetIDs(ctx context.Context, id string) (string, string, error) {
 	query := `
 	select
-		kitchen_id
+		user_id, kitchen_id
+	from
+		orders
+	where
+		deleted_at is null and id = $1`
+
+	var userID, kitchenID string
+	err := o.DB.QueryRowContext(ctx, query, id).Scan(&userID, &kitchenID)
+	if err != nil {
+		return "", "", errors.Wrap(err, "ids retrieval failure")
+	}
+
+	return userID, kitchenID, nil
+}
+
+func (o *OrderRepo) GetAmount(ctx context.Context, id string) (float32, error) {
+	query := `
+	select
+		total_amount
 	from
 		orders
 	where
 		deleted_at is null and id = $1
 	`
 
-	var kitchenID string
-	err := o.DB.QueryRowContext(ctx, query, id).Scan(&kitchenID)
+	var amount float32
+	err := o.DB.QueryRowContext(ctx, query, id).Scan(&amount)
 	if err != nil {
-		return "", errors.Wrap(err, "reading failure")
+		return 0, errors.Wrap(err, "reading failure")
 	}
 
-	return kitchenID, nil
+	return amount, nil
+}
+
+func (o *OrderRepo) GetStatus(ctx context.Context, id string) (string, error) {
+	query := `
+	select
+		status
+	from
+		orders
+	where
+		deleted_at is null and id = $1
+	`
+
+	var status string
+	err := o.DB.QueryRowContext(ctx, query, id).Scan(&status)
+	if err != nil {
+		return "", errors.Wrap(err, "status reading failure")
+	}
+
+	return status, nil
 }

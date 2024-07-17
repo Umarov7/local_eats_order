@@ -9,7 +9,8 @@ import (
 )
 
 type PaymentRepo struct {
-	DB *sql.DB
+	DB        *sql.DB
+	orderRepo *OrderRepo
 }
 
 func NewPaymentRepo(db *sql.DB) *PaymentRepo {
@@ -26,7 +27,7 @@ func (p *PaymentRepo) Create(ctx context.Context, data *pb.NewPayment) (*pb.NewP
 		id, order_id, amount, status, transaction_id, created_at
 	`
 
-	amount, err := p.GetAmount(ctx, data.OrderId)
+	amount, err := p.orderRepo.GetAmount(ctx, data.OrderId)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get amount")
 	}
@@ -81,23 +82,4 @@ func (p *PaymentRepo) Read(ctx context.Context, id *pb.ID) (*pb.PaymentDetails, 
 		pay.TransactionId = trID.String
 	}
 	return &pay, nil
-}
-
-func (p *PaymentRepo) GetAmount(ctx context.Context, id string) (float32, error) {
-	query := `
-	select
-		total_amount
-	from
-		orders
-	where
-		deleted_at is null and id = $1
-	`
-
-	var amount float32
-	err := p.DB.QueryRowContext(ctx, query, id).Scan(&amount)
-	if err != nil {
-		return 0, errors.Wrap(err, "reading failure")
-	}
-
-	return amount, nil
 }

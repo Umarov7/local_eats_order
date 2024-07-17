@@ -23,14 +23,3 @@ func ConnectDB(cfg *config.Config) (*sql.DB, error) {
 
 	return db, nil
 }
-
-type NutritionInfo struct {
-	Calories int `json:"calories"`
-	Fat      int `json:"fat"`
-	Carbs    int `json:"carbs"`
-}
-
-type Item struct {
-	DishId   string `json:"dish_id"`
-	Quantity int    `json:"quantity"`
-}

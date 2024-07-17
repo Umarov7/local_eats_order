@@ -9,6 +9,7 @@ import (
 	pbu "order-service/genproto/user"
 	"order-service/pkg/logger"
 	"order-service/storage/postgres"
+	"order-service/storage/redis"
 
 	"github.com/pkg/errors"
 )
@@ -36,6 +37,13 @@ func (s *OrderService) MakeOrder(ctx context.Context, req *pb.NewOrder) (*pb.New
 	resp, err := s.Repo.MakeOrder(ctx, req)
 	if err != nil {
 		er := errors.Wrap(err, "failed to make order")
+		s.Logger.Error(er.Error())
+		return nil, er
+	}
+
+	err = redis.PlaceOrder(ctx, req)
+	if err != nil {
+		er := errors.Wrap(err, "failed to place order in redis")
 		s.Logger.Error(er.Error())
 		return nil, er
 	}
@@ -76,7 +84,7 @@ func (s *OrderService) GetOrderByID(ctx context.Context, req *pb.ID) (*pb.OrderI
 	}
 	resp.KitchenName = kitchen.Name
 
-	s.Logger.Info("Order fetched")
+	s.Logger.Info("Order retrieved")
 	return resp, nil
 }
 

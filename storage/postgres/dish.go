@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	pb "order-service/genproto/dish"
-	"strconv"
 
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -60,7 +59,7 @@ func (d *DishRepo) Read(ctx context.Context, id *pb.ID) (*pb.DishInfo, error) {
 	dish := pb.DishInfo{Id: id.Id}
 	var ings, aller, diet pq.StringArray
 	var nutrition []byte
-	var nutInfo NutritionInfo
+	var nutInfo pb.NutritionalInfo
 
 	err := d.DB.QueryRowContext(ctx, query, dish.Id).Scan(&dish.KitchenId, &dish.Name,
 		&dish.Description, &dish.Price, &dish.Category, &ings, &aller,
@@ -77,11 +76,7 @@ func (d *DishRepo) Read(ctx context.Context, id *pb.ID) (*pb.DishInfo, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unmarshalling failure")
 	}
-	dish.NutritionInfo = []string{
-		"calories: " + strconv.Itoa(nutInfo.Calories),
-		"fat: " + strconv.Itoa(nutInfo.Fat),
-		"carbs: " + strconv.Itoa(nutInfo.Carbs),
-	}
+	dish.NutritionInfo = &nutInfo
 
 	return &dish, nil
 }
@@ -182,4 +177,35 @@ func (d *DishRepo) CountRows(ctx context.Context) (int, error) {
 	}
 
 	return rowsNum, nil
+}
+
+func (d *DishRepo) GetNamePrice(ctx context.Context, id string) (string, float32, error) {
+	query := "select name, price from dishes where deleted_at is null and id = $1"
+	var name string
+	var price float32
+
+	err := d.DB.QueryRowContext(ctx, query, id).Scan(&name, &price)
+	if err != nil {
+		return "", -1, errors.Wrap(err, "name and price retrieval failure")
+	}
+
+	return name, price, nil
+}
+
+func (d *DishRepo) GetCategory(ctx context.Context, id string) (string, error) {
+	query := `
+	select
+		category
+	from
+		dishes
+	where
+		deleted_at is null and id = $1`
+
+	var category string
+	err := d.DB.QueryRowContext(ctx, query, id).Scan(&category)
+	if err != nil {
+		return "", errors.Wrap(err, "category retrieval failure")
+	}
+
+	return category, nil
 }

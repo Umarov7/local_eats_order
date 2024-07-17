@@ -9,7 +9,8 @@ import (
 )
 
 type ReviewRepo struct {
-	DB *sql.DB
+	DB        *sql.DB
+	orderRepo *OrderRepo
 }
 
 func NewReviewRepo(db *sql.DB) *ReviewRepo {
@@ -25,7 +26,8 @@ func (r *ReviewRepo) Create(ctx context.Context, data *pb.NewReview) (*pb.NewRev
 	returning
 		id, order_id, user_id, kitchen_id, rating, comment, created_at
 	`
-	userID, kitchenID, err := r.GetIDs(ctx, data.OrderId)
+
+	userID, kitchenID, err := r.orderRepo.GetIDs(ctx, data.OrderId)
 	if err != nil {
 		return nil, err
 	}
@@ -90,24 +92,6 @@ func (r *ReviewRepo) GetKitchenReviews(ctx context.Context, f *pb.Filter) (*pb.R
 		Page:          f.Offset / f.Limit,
 		Limit:         f.Limit,
 	}, nil
-}
-
-func (r *ReviewRepo) GetIDs(ctx context.Context, id string) (string, string, error) {
-	query := `
-	select
-		user_id, kitchen_id
-	from
-		orders
-	where
-		deleted_at is null and id = $1`
-
-	var userID, kitchenID string
-	err := r.DB.QueryRowContext(ctx, query, id).Scan(&userID, &kitchenID)
-	if err != nil {
-		return "", "", errors.Wrap(err, "ids retrieval failure")
-	}
-
-	return userID, kitchenID, nil
 }
 
 func (r *ReviewRepo) CountRows(ctx context.Context, kitchenID string) (int, error) {
