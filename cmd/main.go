@@ -5,6 +5,7 @@ import (
 	"net"
 	"order-service/config"
 	pbd "order-service/genproto/dish"
+	pbe "order-service/genproto/extra"
 	pbo "order-service/genproto/order"
 	pbp "order-service/genproto/payment"
 	pbr "order-service/genproto/review"
@@ -37,12 +38,14 @@ func main() {
 	orderService := service.NewOrderService(db, userClient, kitchenClient)
 	reviewService := service.NewReviewService(db, userClient, kitchenClient)
 	paymentService := service.NewPaymentService(db, kitchenClient)
+	extraService := service.NewExtraService(db, kitchenClient)
 
 	server := grpc.NewServer()
 	pbd.RegisterDishServer(server, dishService)
 	pbo.RegisterOrderServer(server, orderService)
 	pbr.RegisterReviewServer(server, reviewService)
 	pbp.RegisterPaymentServer(server, paymentService)
+	pbe.RegisterExtraServer(server, extraService)
 
 	log.Printf("server listening at %v", lis.Addr())
 	err = server.Serve(lis)
