@@ -15,7 +15,10 @@ type OrderRepo struct {
 }
 
 func NewOrderRepo(db *sql.DB) *OrderRepo {
-	return &OrderRepo{DB: db}
+	return &OrderRepo{
+		DB:       db,
+		dishRepo: NewDishRepo(db),
+	}
 }
 
 func (o *OrderRepo) MakeOrder(ctx context.Context, data *pb.NewOrder) (*pb.NewOrderResp, error) {

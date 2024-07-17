@@ -14,7 +14,10 @@ type ReviewRepo struct {
 }
 
 func NewReviewRepo(db *sql.DB) *ReviewRepo {
-	return &ReviewRepo{DB: db}
+	return &ReviewRepo{
+		DB:        db,
+		orderRepo: NewOrderRepo(db),
+	}
 }
 
 func (r *ReviewRepo) Create(ctx context.Context, data *pb.NewReview) (*pb.NewReviewResp, error) {

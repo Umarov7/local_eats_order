@@ -14,7 +14,10 @@ type PaymentRepo struct {
 }
 
 func NewPaymentRepo(db *sql.DB) *PaymentRepo {
-	return &PaymentRepo{DB: db}
+	return &PaymentRepo{
+		DB:        db,
+		orderRepo: NewOrderRepo(db),
+	}
 }
 
 func (p *PaymentRepo) Create(ctx context.Context, data *pb.NewPayment) (*pb.NewPaymentResp, error) {
