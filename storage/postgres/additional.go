@@ -14,6 +14,7 @@ import (
 )
 
 type BonusRepo struct {
+	pb.UnimplementedExtraServer
 	DB       *sql.DB
 	dishRepo *DishRepo
 }
