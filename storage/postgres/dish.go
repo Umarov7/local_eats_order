@@ -21,16 +21,22 @@ func NewDishRepo(db *sql.DB) *DishRepo {
 func (d *DishRepo) Create(ctx context.Context, data *pb.NewDish) (*pb.NewDishResp, error) {
 	query := `
 	insert into
-		dishes (kitchen_id, name, description, price, category, ingredients, available)
+		dishes (kitchen_id, name, description, price, category, ingredients,
+			allergens, nutrition_info, dietary_info, available)
 	values
-		($1, $2, $3, $4, $5, $6, $7)
+		($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	returning
 		id, kitchen_id, name, description, price, category, ingredients, available, created_at
 	`
 
 	var ings pq.StringArray
+	aller := pq.StringArray{"no_allergens"}
+	nutritJSON := `{"calories": 0, "protein": 0, "fat": 0, "carbs": 0}`
+	nutrit := json.RawMessage(nutritJSON)
+	diet := pq.StringArray{"no_dietary_info"}
 	row := d.DB.QueryRowContext(ctx, query, data.KitchenId, data.Name, data.Description,
-		data.Price, data.Category, pq.Array(data.Ingredients), data.Available,
+		data.Price, data.Category, pq.Array(data.Ingredients),
+		aller, nutrit, diet, data.Available,
 	)
 
 	var dish pb.NewDishResp
@@ -48,8 +54,8 @@ func (d *DishRepo) Create(ctx context.Context, data *pb.NewDish) (*pb.NewDishRes
 func (d *DishRepo) Read(ctx context.Context, id *pb.ID) (*pb.DishInfo, error) {
 	query := `
 	select
-		kitchen_id, name, description, price, category, ingredients,
-		allergens, nutrition_info, dietary_info, available, created_at, updated_at 
+		kitchen_id, name, description, price, category,
+		ingredients, available, created_at, updated_at 
 	from
 		dishes
 	where
@@ -57,26 +63,17 @@ func (d *DishRepo) Read(ctx context.Context, id *pb.ID) (*pb.DishInfo, error) {
 	`
 
 	dish := pb.DishInfo{Id: id.Id}
-	var ings, aller, diet pq.StringArray
-	var nutrition []byte
-	var nutInfo pb.NutritionalInfo
+	var ings pq.StringArray
 
 	err := d.DB.QueryRowContext(ctx, query, dish.Id).Scan(&dish.KitchenId, &dish.Name,
-		&dish.Description, &dish.Price, &dish.Category, &ings, &aller,
-		&nutrition, &diet, &dish.Available, &dish.CreatedAt, &dish.UpdatedAt,
+		&dish.Description, &dish.Price, &dish.Category, &ings, &dish.Available,
+		&dish.CreatedAt, &dish.UpdatedAt,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "reading failure")
 	}
 
 	dish.Ingredients = []string(ings)
-	dish.Allergens = []string(aller)
-	dish.DietaryInfo = []string(diet)
-	err = json.Unmarshal(nutrition, &nutInfo)
-	if err != nil {
-		return nil, errors.Wrap(err, "unmarshalling failure")
-	}
-	dish.NutritionInfo = &nutInfo
 
 	return &dish, nil
 }

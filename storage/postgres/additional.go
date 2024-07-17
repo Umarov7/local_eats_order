@@ -20,7 +20,10 @@ type BonusRepo struct {
 }
 
 func NewBonusRepo(db *sql.DB) *BonusRepo {
-	return &BonusRepo{DB: db}
+	return &BonusRepo{
+		DB:       db,
+		dishRepo: NewDishRepo(db),
+	}
 }
 
 func (b *BonusRepo) GetKitchenStatistics(ctx context.Context, period *pb.Period) (*pb.Statistics, error) {
@@ -54,30 +57,12 @@ func (b *BonusRepo) GetKitchenStatistics(ctx context.Context, period *pb.Period)
 		kitchen_id = $1 and created_at between $2 and $3
 	`
 
-	query4 := `
-	select
-		extract(hour from created_at), count(1) as orders_count
-	from
-		orders
-	where
-		deleted_at is null and status = 'completed' and
-		kitchen_id = $1 and created_at between $2 and $3
-	group by
-		created_at
-	order by
-		orders_count desc
-	limit
-		3
-	`
-
-	var totalOrders int
-	var totalRevenue, avgRating float32
-	var itemsByte, hoursByte []byte
+	var totalOrders sql.NullInt64
+	var totalRevenue, avgRating sql.NullFloat64
+	var itemsByte []byte
 	var items []*pbo.Item
 	dish := make(map[string]*pb.DishNoID)
-	hour := make(map[int32]*pb.OrderPerHour)
 	var topDishes []*pb.Dish
-	var busiestHours []*pb.OrderPerHour
 
 	err := b.DB.QueryRowContext(ctx, query1, period.Id, period.StartDate, period.EndDate).Scan(&totalOrders, &totalRevenue)
 	if err != nil {
@@ -94,14 +79,6 @@ func (b *BonusRepo) GetKitchenStatistics(ctx context.Context, period *pb.Period)
 	err = json.Unmarshal(itemsByte, &items)
 	if err != nil {
 		return nil, errors.Wrap(err, "top dishes unmarshal failure")
-	}
-	err = b.DB.QueryRowContext(ctx, query4, period.Id, period.StartDate, period.EndDate).Scan(&hoursByte)
-	if err != nil {
-		return nil, errors.Wrap(err, "busiest hours retrieval failure")
-	}
-	err = json.Unmarshal(hoursByte, &busiestHours)
-	if err != nil {
-		return nil, errors.Wrap(err, "busiest hours unmarshal failure")
 	}
 
 	for _, v := range items {
@@ -124,15 +101,6 @@ func (b *BonusRepo) GetKitchenStatistics(ctx context.Context, period *pb.Period)
 		}
 	}
 
-	for _, v := range busiestHours {
-		if existingHour, ok := hour[v.Hour]; ok {
-			existingHour.OrdersCount += v.OrdersCount
-			hour[v.Hour] = existingHour
-		} else {
-			hour[v.Hour] = v
-		}
-	}
-
 	for k, v := range dish {
 		topDishes = append(topDishes, &pb.Dish{
 			Id:          k,
@@ -142,19 +110,24 @@ func (b *BonusRepo) GetKitchenStatistics(ctx context.Context, period *pb.Period)
 		})
 	}
 
-	for k, v := range hour {
-		busiestHours = append(busiestHours, &pb.OrderPerHour{
-			Hour:        k,
-			OrdersCount: v.OrdersCount,
-		})
+	var totalOrdersInt int32
+	var totalRevenueFloat, avgRatingFloat float32
+
+	if totalOrders.Valid {
+		totalOrdersInt = int32(totalOrders.Int64)
+	}
+	if totalRevenue.Valid {
+		totalRevenueFloat = float32(totalRevenue.Float64)
+	}
+	if avgRating.Valid {
+		avgRatingFloat = float32(avgRating.Float64)
 	}
 
 	return &pb.Statistics{
-		TotalOrders:   int32(totalOrders),
-		TotalRevenue:  totalRevenue,
-		AverageRating: avgRating,
+		TotalOrders:   totalOrdersInt,
+		TotalRevenue:  totalRevenueFloat,
+		AverageRating: avgRatingFloat,
 		TopDishes:     topDishes,
-		BusiestHours:  busiestHours,
 	}, nil
 }
 
@@ -182,25 +155,26 @@ func (b *BonusRepo) TrackActivity(ctx context.Context, period *pb.Period) (*pb.A
 
 	query3 := `
 	select
-		kitchen_id, kitchen_id
+		kitchen_id, kitchen_id,
 		count(1) as orders_count
 	from
 		orders
 	where
 		deleted_at is null and status = 'completed' and
 		user_id = $1 and created_at between $2 and $3
+	group by
+		kitchen_id
 	`
 
-	var totalOrders int
-	var totalSpent float32
-	var itemsByte, kitchensByte []byte
+	var totalOrdersNull, ordersCountNull sql.NullInt64
+	var totalSpentNull sql.NullFloat64
+	var itemsByte []byte
 	var items []*pbo.Item
 	cuisine := make(map[string]int32)
-	kitchen := make(map[string]*pb.KitchenNoID)
-	var kitchens []*pb.Kitchen
+	var idNull, nameNull sql.NullString
 	var cuisines []*pb.Cuisine
 
-	err := b.DB.QueryRowContext(ctx, query1, period.Id, period.StartDate, period.EndDate).Scan(&totalOrders, &totalSpent)
+	err := b.DB.QueryRowContext(ctx, query1, period.Id, period.StartDate, period.EndDate).Scan(&totalOrdersNull, &totalSpentNull)
 	if err != nil {
 		return nil, errors.Wrap(err, "total orders and revenue retrieval failure")
 	}
@@ -212,13 +186,9 @@ func (b *BonusRepo) TrackActivity(ctx context.Context, period *pb.Period) (*pb.A
 	if err != nil {
 		return nil, errors.Wrap(err, "dishes unmarshal failure")
 	}
-	err = b.DB.QueryRowContext(ctx, query3, period.Id, period.StartDate, period.EndDate).Scan(&kitchensByte)
+	err = b.DB.QueryRowContext(ctx, query3, period.Id, period.StartDate, period.EndDate).Scan(&idNull, &nameNull, &ordersCountNull)
 	if err != nil {
 		return nil, errors.Wrap(err, "kitchens retrieval failure")
-	}
-	err = json.Unmarshal(kitchensByte, &kitchens)
-	if err != nil {
-		return nil, errors.Wrap(err, "kitchens unmarshal failure")
 	}
 
 	for _, v := range items {
@@ -235,19 +205,6 @@ func (b *BonusRepo) TrackActivity(ctx context.Context, period *pb.Period) (*pb.A
 		}
 	}
 
-	for _, v := range kitchens {
-		if existingKitchen, ok := kitchen[v.Id]; ok {
-			existingKitchen.OrdersCount += v.OrdersCount
-			kitchen[v.Id] = existingKitchen
-		} else {
-			newKitchen := pb.KitchenNoID{
-				Name:        v.Name,
-				OrdersCount: v.OrdersCount,
-			}
-			kitchen[v.Id] = &newKitchen
-		}
-	}
-
 	for k, v := range cuisine {
 		cuisines = append(cuisines, &pb.Cuisine{
 			CuisineType: k,
@@ -255,19 +212,33 @@ func (b *BonusRepo) TrackActivity(ctx context.Context, period *pb.Period) (*pb.A
 		})
 	}
 
-	for k, v := range kitchen {
-		kitchens = append(kitchens, &pb.Kitchen{
-			Id:          k,
-			Name:        v.Name,
-			OrdersCount: v.OrdersCount,
-		})
+	var id, name string
+	var totalOrders, ordersCount int32
+	var totalSpent float32
+
+	if idNull.Valid {
+		id = idNull.String
+	}
+	if nameNull.Valid {
+		name = nameNull.String
+	}
+	if ordersCountNull.Valid {
+		ordersCount = int32(ordersCountNull.Int64)
+	}
+	if totalOrdersNull.Valid {
+		totalOrders = int32(totalOrdersNull.Int64)
+	}
+	if totalSpentNull.Valid {
+		totalSpent = float32(totalSpentNull.Float64)
 	}
 
 	return &pb.Activity{
 		TotalOrders:      int32(totalOrders),
 		TotalSpent:       totalSpent,
 		FavoriteCuisines: cuisines,
-		FavoriteKitchens: kitchens,
+		FavoriteKitchens: []*pb.Kitchen{
+			{Id: id, Name: name, OrdersCount: ordersCount},
+		},
 	}, nil
 }
 
