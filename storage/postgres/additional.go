@@ -53,12 +53,30 @@ func (b *BonusRepo) GetKitchenStatistics(ctx context.Context, period *pb.Period)
 		kitchen_id = $1 and created_at between $2 and $3
 	`
 
+	query4 := `
+	select
+		extract(hour from created_at), count(1) as orders_count
+	from
+		orders
+	where
+		deleted_at is null and status = 'completed' and
+		kitchen_id = $1 and created_at between $2 and $3
+	group by
+		created_at
+	order by
+		orders_count desc
+	limit
+		3
+	`
+
 	var totalOrders int
 	var totalRevenue, avgRating float32
-	var itemsByte []byte
+	var itemsByte, hoursByte []byte
 	var items []*pbo.Item
 	dish := make(map[string]*pb.DishNoID)
+	hour := make(map[int32]*pb.OrderPerHour)
 	var topDishes []*pb.Dish
+	var busiestHours []*pb.OrderPerHour
 
 	err := b.DB.QueryRowContext(ctx, query1, period.Id, period.StartDate, period.EndDate).Scan(&totalOrders, &totalRevenue)
 	if err != nil {
@@ -75,6 +93,14 @@ func (b *BonusRepo) GetKitchenStatistics(ctx context.Context, period *pb.Period)
 	err = json.Unmarshal(itemsByte, &items)
 	if err != nil {
 		return nil, errors.Wrap(err, "top dishes unmarshal failure")
+	}
+	err = b.DB.QueryRowContext(ctx, query4, period.Id, period.StartDate, period.EndDate).Scan(&hoursByte)
+	if err != nil {
+		return nil, errors.Wrap(err, "busiest hours retrieval failure")
+	}
+	err = json.Unmarshal(hoursByte, &busiestHours)
+	if err != nil {
+		return nil, errors.Wrap(err, "busiest hours unmarshal failure")
 	}
 
 	for _, v := range items {
@@ -95,7 +121,15 @@ func (b *BonusRepo) GetKitchenStatistics(ctx context.Context, period *pb.Period)
 			}
 			dish[v.DishId] = &newDish
 		}
+	}
 
+	for _, v := range busiestHours {
+		if existingHour, ok := hour[v.Hour]; ok {
+			existingHour.OrdersCount += v.OrdersCount
+			hour[v.Hour] = existingHour
+		} else {
+			hour[v.Hour] = v
+		}
 	}
 
 	for k, v := range dish {
@@ -107,11 +141,19 @@ func (b *BonusRepo) GetKitchenStatistics(ctx context.Context, period *pb.Period)
 		})
 	}
 
+	for k, v := range hour {
+		busiestHours = append(busiestHours, &pb.OrderPerHour{
+			Hour:        k,
+			OrdersCount: v.OrdersCount,
+		})
+	}
+
 	return &pb.Statistics{
 		TotalOrders:   int32(totalOrders),
 		TotalRevenue:  totalRevenue,
 		AverageRating: avgRating,
 		TopDishes:     topDishes,
+		BusiestHours:  busiestHours,
 	}, nil
 }
 
