@@ -19,8 +19,8 @@ type Config struct {
 }
 
 func Load() *Config {
-	if err := godotenv.Load("/home/ibrohim/go/src/github.com/golangN11/local_eats/Order/.env"); err != nil {
-		log.Fatalf("error while loading .env file: %v", err)
+	if err := godotenv.Load(".env"); err != nil {
+		log.Printf("error while loading .env file: %v", err)
 	}
 
 	return &Config{
