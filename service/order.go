@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
+	"order-service/config"
 	pbk "order-service/genproto/kitchen"
 	pb "order-service/genproto/order"
 	pbu "order-service/genproto/user"
@@ -19,14 +20,16 @@ type OrderService struct {
 	Repo          *postgres.OrderRepo
 	UserClient    pbu.UserClient
 	KitchenClient pbk.KitchenClient
+	Config        *config.Config
 	Logger        *slog.Logger
 }
 
-func NewOrderService(db *sql.DB, userCl pbu.UserClient, kitCl pbk.KitchenClient) *OrderService {
+func NewOrderService(db *sql.DB, userCl pbu.UserClient, kitCl pbk.KitchenClient, cfg *config.Config) *OrderService {
 	return &OrderService{
 		Repo:          postgres.NewOrderRepo(db),
 		UserClient:    userCl,
 		KitchenClient: kitCl,
+		Config:        cfg,
 		Logger:        logger.NewLogger(),
 	}
 }
@@ -41,7 +44,7 @@ func (s *OrderService) MakeOrder(ctx context.Context, req *pb.NewOrder) (*pb.New
 		return nil, er
 	}
 
-	err = redis.PlaceOrder(ctx, req)
+	err = redis.PlaceOrder(s.Config, ctx, req)
 	if err != nil {
 		er := errors.Wrap(err, "failed to place order in redis")
 		s.Logger.Error(er.Error())

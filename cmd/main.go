@@ -35,7 +35,7 @@ func main() {
 	kitchenClient := pkg.CreateKitchenClient(cfg)
 
 	dishService := service.NewDishService(db, kitchenClient)
-	orderService := service.NewOrderService(db, userClient, kitchenClient)
+	orderService := service.NewOrderService(db, userClient, kitchenClient, cfg)
 	reviewService := service.NewReviewService(db, userClient, kitchenClient)
 	paymentService := service.NewPaymentService(db, kitchenClient)
 	extraService := service.NewExtraService(db, kitchenClient)
